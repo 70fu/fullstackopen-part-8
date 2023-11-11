@@ -3,5 +3,16 @@
     "@apollo/server": "^4.9.5",
     "graphql": "^16.8.1",
     "uuid": "^9.0.1"
-  }
+  },
+  "name": "library-backend",
+  "version": "0.0.1",
+  "description": "Simple GraphQL Library backend",
+  "main": "library-backend.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./library-backend.js"
+  },
+  "author": "Simon Reiser",
+  "license": "MIT"
 }
