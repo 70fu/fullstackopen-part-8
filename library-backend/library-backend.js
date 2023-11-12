@@ -120,7 +120,8 @@ const typeDefs = `
       author:String!,
       published:Int!,
       genres:[String!]!
-    ):Book
+    ):Book,
+    editAuthor(name:String!, setBornTo:Int!):Author
   }
 `;
 
@@ -152,6 +153,19 @@ const resolvers = {
       }
 
       return book;
+    },
+    editAuthor: (root, args) => {
+      const author = authors.find((author) => author.name === args.name);
+      if (!author) {
+        return null;
+      }
+
+      //create modified author object and replace object in authors array
+      const editedAuthor = { ...author, born: args.setBornTo };
+      authors = authors.map((author) =>
+        author.name === editedAuthor.name ? editedAuthor : author
+      );
+      return editedAuthor;
     },
   },
   Author: {
