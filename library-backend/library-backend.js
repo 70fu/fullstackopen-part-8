@@ -4,6 +4,8 @@ const { v1: uuid } = require("uuid");
 const Author = require("./models/author");
 const Book = require("./models/book");
 const { default: mongoose } = require("mongoose");
+const { GraphQLError } = require("graphql");
+const Errors = require("./Errors");
 mongoose.set("strictQuery", false);
 
 require("dotenv").config();
@@ -152,7 +154,11 @@ const resolvers = {
         const author = await Author.findOne({ name: args.author });
         if (!author) {
           console.log("No author found with name", args.author);
-          return [];
+          throw new GraphQLError(`No author found with name ${args.author}`, {
+            extensions: {
+              code: Errors.BAD_USER_INPUT,
+            },
+          });
         }
 
         query.author = author._id;
@@ -180,7 +186,7 @@ const resolvers = {
         } catch (error) {
           throw new GraphQLError("Saving author failed", {
             extensions: {
-              code: "BAD_USER_INPUT",
+              code: Errors.BAD_USER_INPUT,
               invalidArgs: args.author,
               error,
             },
@@ -190,7 +196,17 @@ const resolvers = {
 
       //create new book
       const book = new Book({ ...args, author: author });
-      await book.save();
+      try {
+        await book.save();
+      } catch (error) {
+        throw new GraphQLError("Saving book failed", {
+          extensions: {
+            code: Errors.BAD_USER_INPUT,
+            invalidArgs: args,
+            error,
+          },
+        });
+      }
       return book;
     },
     editAuthor: async (root, args) => {
