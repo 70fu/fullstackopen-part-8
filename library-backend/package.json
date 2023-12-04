@@ -1,14 +1,16 @@
 {
   "dependencies": {
     "@apollo/server": "^4.9.5",
+    "dotenv": "^16.3.1",
     "graphql": "^16.8.1",
+    "mongoose": "^7.6.3",
+    "mongoose-unique-validator": "^4.0.0",
     "uuid": "^9.0.1"
   },
   "name": "library-backend",
   "version": "0.0.1",
   "description": "Simple GraphQL Library backend",
   "main": "library-backend.js",
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node ./library-backend.js"

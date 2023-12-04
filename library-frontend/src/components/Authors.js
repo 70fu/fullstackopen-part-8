@@ -3,14 +3,18 @@ import { ALL_AUTHORS, EDIT_AUTHOR } from "../queries";
 import { useMutation, useQuery } from "@apollo/client";
 
 const Authors = () => {
-  const [selectedName, setSelectedName] = useState({});
+  const [selectedName, setSelectedName] = useState("");
   const [born, setBorn] = useState(0);
   const authorsResult = useQuery(ALL_AUTHORS, {
     onCompleted: (data) => {
       console.log(data);
       if (data.allAuthors.length > 0) {
-        setSelectedName(data.allAuthors[0]);
+        setSelectedName(data.allAuthors[0].name);
       }
+    },
+    onError: (error) => {
+      const messages = error.graphQLErrors.map((e) => e.message).join("\n");
+      console.error(messages);
     },
   });
   const [editAuthor] = useMutation(EDIT_AUTHOR, {

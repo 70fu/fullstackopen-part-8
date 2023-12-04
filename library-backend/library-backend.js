@@ -1,6 +1,23 @@
 const { ApolloServer } = require("@apollo/server");
 const { startStandaloneServer } = require("@apollo/server/standalone");
 const { v1: uuid } = require("uuid");
+const Author = require("./models/author");
+const Book = require("./models/book");
+const { default: mongoose } = require("mongoose");
+mongoose.set("strictQuery", false);
+
+require("dotenv").config();
+const MONGODB_URI = process.env.MONGODB_URI;
+console.log("connecting to", MONGODB_URI);
+
+mongoose
+  .connect(MONGODB_URI)
+  .then(() => {
+    console.log("connected to MongoDB");
+  })
+  .catch((error) => {
+    console.log("error connection to MongoDB:", error.message);
+  });
 
 let authors = [
   {
@@ -104,7 +121,7 @@ const typeDefs = `
   type Book {
     title:String!,
     published:Int!,
-    author:String!,
+    author:Author!,
     id: ID!,
     genres:[String!]!
   }
@@ -127,50 +144,74 @@ const typeDefs = `
 
 const resolvers = {
   Query: {
-    bookCount: () => books.length,
-    authorCount: () => authors.length,
-    allBooks: (root, args) => {
-      return books.filter(
-        (book) =>
-          (!args.author || book.author === args.author) &&
-          (!args.genre || book.genres.includes(args.genre))
-      );
+    bookCount: async () => Book.collection.countDocuments(),
+    authorCount: async () => Author.collection.countDocuments(),
+    allBooks: async (root, args) => {
+      let query = {};
+      if (args.author) {
+        const author = await Author.findOne({ name: args.author });
+        if (!author) {
+          console.log("No author found with name", args.author);
+          return [];
+        }
+
+        query.author = author._id;
+      }
+      if (args.genre) {
+        query.genres = args.genre;
+      }
+      console.log("performing allBooks with query", query);
+      return Book.find(query);
     },
-    allAuthors: () => authors,
+    allAuthors: async () => Author.find({}),
   },
   Mutation: {
-    addBook: (root, args) => {
-      const book = { ...args, id: uuid() };
-      books = books.concat(book);
-
-      //add author if not existant
-      if (!authors.some((author) => author.name === book.author)) {
-        const author = {
-          name: book.author,
-          id: uuid(),
-        };
-        authors = authors.concat(author);
+    addBook: async (root, args) => {
+      //find author
+      console.log("find author", args.author);
+      let author = await Author.findOne({ name: args.author });
+      //create author if not existent
+      if (!author) {
+        author = new Author({ name: args.author });
+        console.log("Create author");
+        try {
+          await author.save();
+          console.log("Author saved", author);
+        } catch (error) {
+          throw new GraphQLError("Saving author failed", {
+            extensions: {
+              code: "BAD_USER_INPUT",
+              invalidArgs: args.author,
+              error,
+            },
+          });
+        }
       }
 
+      //create new book
+      const book = new Book({ ...args, author: author });
+      await book.save();
       return book;
     },
-    editAuthor: (root, args) => {
-      const author = authors.find((author) => author.name === args.name);
+    editAuthor: async (root, args) => {
+      const author = await Author.findOne({ name: args.name });
       if (!author) {
         return null;
       }
 
-      //create modified author object and replace object in authors array
-      const editedAuthor = { ...author, born: args.setBornTo };
-      authors = authors.map((author) =>
-        author.name === editedAuthor.name ? editedAuthor : author
-      );
-      return editedAuthor;
+      author.born = args.setBornTo;
+      await author.save();
+      return author;
     },
   },
   Author: {
-    bookCount: (root) =>
-      books.filter((book) => book.author === root.name).length,
+    bookCount: async (root) => Book.countDocuments({ author: root._id }),
+  },
+  Book: {
+    author: async (root) => {
+      await root.populate("author");
+      return root.author;
+    },
   },
 };
 
