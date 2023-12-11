@@ -5,6 +5,7 @@ import { useMutation, useQuery } from "@apollo/client";
 const Authors = () => {
   const [selectedName, setSelectedName] = useState("");
   const [born, setBorn] = useState(0);
+  const token = localStorage.getItem("library-user-token");
   const authorsResult = useQuery(ALL_AUTHORS, {
     onCompleted: (data) => {
       console.log(data);
@@ -61,30 +62,34 @@ const Authors = () => {
           ))}
         </tbody>
       </table>
-      <h2>set birthyear</h2>
-      <form onSubmit={handleSubmit}>
-        <select
-          value={selectedName}
-          onChange={(e) => {
-            setSelectedName(e.target.value);
-          }}
-        >
-          {authorsResult.data.allAuthors.map((a) => (
-            <option key={a.name} value={a.name}>
-              {a.name}
-            </option>
-          ))}
-        </select>
-        <div>
-          born
-          <input
-            type="number"
-            value={born}
-            onChange={({ target }) => setBorn(target.value)}
-          />
-        </div>
-        <button type="submit">update author</button>
-      </form>
+      {token && (
+        <>
+          <h2>set birthyear</h2>
+          <form onSubmit={handleSubmit}>
+            <select
+              value={selectedName}
+              onChange={(e) => {
+                setSelectedName(e.target.value);
+              }}
+            >
+              {authorsResult.data.allAuthors.map((a) => (
+                <option key={a.name} value={a.name}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
+            <div>
+              born
+              <input
+                type="number"
+                value={born}
+                onChange={({ target }) => setBorn(target.value)}
+              />
+            </div>
+            <button type="submit">update author</button>
+          </form>
+        </>
+      )}
     </div>
   );
 };

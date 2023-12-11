@@ -1,5 +1,5 @@
 import { useMutation } from "@apollo/client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { ALL_AUTHORS, ALL_BOOKS, CREATE_BOOK } from "../queries";
 
 const NewBook = () => {
@@ -33,6 +33,9 @@ const NewBook = () => {
   };
 
   const addGenre = () => {
+    if (!genre.trim()) {
+      return;
+    }
     setGenres(genres.concat(genre));
     setGenre("");
   };
@@ -66,6 +69,12 @@ const NewBook = () => {
           <input
             value={genre}
             onChange={({ target }) => setGenre(target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addGenre();
+              }
+            }}
           />
           <button onClick={addGenre} type="button">
             add genre
