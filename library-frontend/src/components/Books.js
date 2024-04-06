@@ -1,7 +1,10 @@
 import { useQuery } from "@apollo/client";
 import { ALL_BOOKS } from "../queries";
+import SelectGenre from "./SelectGenre";
+import { useState } from "react";
 
 const Books = () => {
+  const [selectedGenre, setSelectedGenre] = useState("");
   const books = useQuery(ALL_BOOKS, {
     onError: (error) => {
       const messages = error.graphQLErrors.map((e) => e.message).join("\n");
@@ -19,7 +22,7 @@ const Books = () => {
   }
 
   return (
-    <div>
+    <div className="fit-container">
       <h2>books</h2>
 
       <table>
@@ -29,15 +32,23 @@ const Books = () => {
             <th>author</th>
             <th>published</th>
           </tr>
-          {books.data.allBooks.map((a) => (
-            <tr key={a.title}>
-              <td>{a.title}</td>
-              <td>{a.author.name}</td>
-              <td>{a.published}</td>
-            </tr>
-          ))}
+          {books.data.allBooks
+            .filter(
+              (book) => !selectedGenre || book.genres.includes(selectedGenre)
+            )
+            .map((a) => (
+              <tr key={a.title}>
+                <td>{a.title}</td>
+                <td>{a.author.name}</td>
+                <td>{a.published}</td>
+              </tr>
+            ))}
         </tbody>
       </table>
+      <SelectGenre
+        selectedGenre={selectedGenre}
+        setSelectedGenre={setSelectedGenre}
+      />
     </div>
   );
 };
